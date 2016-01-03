@@ -80,14 +80,14 @@ class Dungeon
 
     def detect_monsters
         current_room = find_room_in_dungeon(@player.location)
+        monsters = current_room.monsters
 
-        puts "Monsters type= #{current_room.monsters.size}"
-        if current_room.monsters.size == 1
-            puts "You've come upon a #{current_room.monsters[0].name}"
-        elsif current_room.monsters.size > 1
-            puts "You've come upon a host of monsters:"
-            current_room.monsters.each{|monster| puts "a #{monster.name}"}
+        if monsters.size > 0
+            print "\nYou've come upon "
+            print "a host of monsters:\n" if monsters.size > 1
+            monsters.each{|monster| puts "a #{monster.name}"}
         end
+        
     end
     
     def find_room_in_direction(direction)
