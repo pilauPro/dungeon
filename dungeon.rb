@@ -1,6 +1,8 @@
+# This class contains methods necessary to run the dungeon game, as well as Player, Monster, & Room classes
 class Dungeon
     attr_accessor :player
     
+    # Create the dungeon object and store the player's name
     def initialize(player_name)
         @player = Player.new(player_name)
         @rooms = []
@@ -8,22 +10,27 @@ class Dungeon
         @monsters = []
     end
     
+    # This method adds a room to the current object's array of rooms
     def add_room(reference, name, description, connections)
         @rooms << Room.new(reference, name, description, connections)
     end
     
+    # This method adds an item to the current object's array of items
     def add_item(name, description)
         @items << Item.new(name, description)
     end
 
+    # This method adds a monster to the current object's array of monsters
     def add_monster(name, description, hit_points, attack_min, attack_max)
         @monsters << Monster.new(name, description, hit_points, attack_min, attack_max)
     end
 
+    # This method removes a room's items after they've been taken by the player
     def remove_items(room)
         room.items.clear
     end
     
+    # This method disperses all of the current object's items, randomly amongst the rooms
     def disperse_items
         @items.each {|item| 
             room = @rooms[rand(@rooms.size)]
@@ -31,6 +38,7 @@ class Dungeon
         }
     end
 
+    # This method disperses all of the current object's monsters, randomly amongst the rooms
     def disperse_monsters
         @monsters.each{|monster|
             room = @rooms[rand(@rooms.size)]
@@ -38,20 +46,29 @@ class Dungeon
         } 
     end
     
+    # This method starts the player in a specified room of the dungeon
     def start(location)
         @player.location = location
         show_current_description
         detect_monsters
     end
     
+    # This method prints the description of the room the player is currently in
     def show_current_description
         puts find_room_in_dungeon(@player.location).full_description
     end
     
+    # This method returns a room object that matches the passed in reference
     def find_room_in_dungeon(reference)
         @rooms.detect {|room| reference.to_sym == room.reference}
     end
-    
+
+    # This method returns a hash value with key matching passed in direction
+    def find_room_in_direction(direction)
+        find_room_in_dungeon(@player.location).connections[direction]
+    end
+
+    # This method moves the player to a new room based on the passed in direction
     def go(direction)
         puts "\nYou go " + direction
         
@@ -67,6 +84,7 @@ class Dungeon
         detect_monsters
     end
     
+    # This method finds items in the current room and adds them to the player's inventory and removes them from the room 
     def search
         current_room = find_room_in_dungeon(@player.location)
         if current_room.items.size > 0
@@ -78,6 +96,7 @@ class Dungeon
         end
     end
 
+    # This method looks for monsters in the current room
     def detect_monsters
         current_room = find_room_in_dungeon(@player.location)
         monsters = current_room.monsters
@@ -90,26 +109,26 @@ class Dungeon
         
     end
     
-    def find_room_in_direction(direction)
-        find_room_in_dungeon(@player.location).connections[direction]
-    end
-    
+    # This class stores information about dungeon players
     class Player
         attr_accessor :name, :location
+
+        # Create a player object, store the player's name, and set beginning hit points
         def initialize(name)
             @name = name
             @inventory = []
             @hit_points = 1000
         end
         
-        Inventory = Struct.new(:name, :description)
-        
+        # This method puts items in the player's inventory
         def add_inventory(items)
             items.each {|item| 
                 @inventory << item
                 puts "#{item.name} added to inventory"
             }
         end
+
+        # This method lists the current player's inventory
         def list_inventory
             puts "\nInventory List\n"
             @inventory.each {|item| puts item.description}
@@ -117,8 +136,11 @@ class Dungeon
         
     end
 
+    # This class stores information about dungeon monsters
     class Monster
         attr_accessor :name
+
+        # Create the monster object, and store name and other attributes
         def initialize(name, description, hit_points, attack_min, attack_max)
             @name = name
             @description = description
@@ -128,8 +150,11 @@ class Dungeon
         end
     end
     
+    # This class stores information about dungeon rooms
     class Room
         attr_accessor :reference, :name, :description, :connections, :items, :monsters
+        
+        # Create the room object and store the passed in attributes
         def initialize(reference, name, description, connections)
             @reference = reference
             @name = name
@@ -143,6 +168,7 @@ class Dungeon
         end
     end
     
+    # This struct stores item information
     Item = Struct.new(:name, :description)
     
 end
@@ -191,10 +217,3 @@ until user_choice =~ /[qQ]/
         current.go(user_choice)
     end
 end
-
-
-# current.search
-
-# current.player.list_inventory
-
-# current.go("north")
