@@ -34,7 +34,6 @@ class Dungeon
     def disperse_items
         @items.each {|item| 
             room = @rooms[rand(2...@rooms.size)]
-            puts "#{room.name}"
             room.items << item
         }
     end
@@ -96,14 +95,23 @@ class Dungeon
     end
 
     # List names of monsters
-    def list_monsters(monsters)
+    def list_monsters
+        monsters = find_room_in_dungeon(@player.location).monsters
         print "\nYou've come upon "
         print "a host of monsters:\n" if monsters.size > 1
         monsters.each{|monster| puts "a #{monster.name}"}
     end
 
     def battle
-        puts @player.hit_points
+        monsters = find_room_in_dungeon(@player.location).monsters
+        until @player.hit_points <= 0
+            monsters.each {|monster| 
+                puts "#{monster.name} inflicts #{rand(monster.attack_min..monster.attack_max)} damage"
+                @player.hit_points -= rand(monster.attack_min..monster.attack_max)
+                break if @player.hit_points <= 0
+                puts "player remaining hit points: #{@player.hit_points}"
+            }
+        end
     end
     
     # This class stores information about dungeon players
@@ -135,7 +143,7 @@ class Dungeon
 
     # This class stores information about dungeon monsters
     class Monster
-        attr_accessor :name
+        attr_accessor :name, :description, :hit_points, :attack_min, :attack_max
 
         # Create the monster object, and store name and other attributes
         def initialize(name, description, hit_points, attack_min, attack_max)
@@ -211,9 +219,8 @@ current.show_current_description
 
 catch(:finish) do
     until user_choice =~ /[qQ]/
-        monsters = current.detect_monsters
-        unless monsters.empty?
-            current.list_monsters(monsters)
+        unless current.detect_monsters.empty?
+            current.list_monsters
             current.battle
         end
         puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
