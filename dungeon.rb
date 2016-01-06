@@ -33,7 +33,8 @@ class Dungeon
     # This method disperses all of the current object's items, randomly amongst the rooms
     def disperse_items
         @items.each {|item| 
-            room = @rooms[rand(@rooms.size)]
+            room = @rooms[rand(2...@rooms.size)]
+            puts "#{room.name}"
             room.items << item
         }
     end
@@ -41,7 +42,7 @@ class Dungeon
     # This method disperses all of the current object's monsters, randomly amongst the rooms
     def disperse_monsters
         @monsters.each{|monster|
-            room = @rooms[rand(@rooms.size)]
+            room = @rooms[rand(2...@rooms.size)]
             room.monsters << monster
         } 
     end
@@ -177,10 +178,15 @@ current_player = gets.chomp
 
 current = Dungeon.new(current_player)
 
-current.add_room(:entrance, "Entrance", "the entrance to the dungeon", {north: :largecave})
-current.add_room(:largecave, "Large Cave", "a vast cavern", {west: :smallcave, south: :entrance})
+current.add_room(:exit, "Exit", "You have escaped the dungeon!", {north: :entrance})
+current.add_room(:entrance, "Entrance", "the entrance to the dungeon", {south: :exit, north: :largecave})
+current.add_room(:largecave, "Large Cave", "a vast cavern", {west: :smallcave, north: :river, south: :entrance})
 current.add_room(:smallcave, "Small Cave", "a small, dank cave", {east: :largecave, south: :idols})
 current.add_room(:idols, "Hall of Idols", "a room filed with mysterious idols", {north: :smallcave})
+
+current.add_room(:river, "Underground River", "a swiftly flowing underground river of unknown origin", {south: :largecave, north: :lake})
+current.add_room(:lake, "Fathomless lake", "a dark, fathomless lake of ill tidings", {south: :river})
+
 
 current.add_item(:torch, "A flaming torch")
 current.add_item(:compass, "glow-in-the-dark magnetic compass")
@@ -190,9 +196,9 @@ current.add_item(:shield, "An oval shield of mirrored steel")
 
 current.disperse_items
 
-current.add_monster(:orc, "A savage orc, dripping with black slime", 100, 5, 50)
-current.add_monster(:serpent, "A venimous snake of enormous proportions", 50, 0, 1000)
-current.add_monster(:slime, "A green slime blob emitting noxious fumes", 25, 1, 10)
+3.times {current.add_monster(:orc, "A savage orc, dripping with black slime", 100, 5, 50)}
+2.times {current.add_monster(:serpent, "A venimous snake of enormous proportions", 50, 0, 1000)}
+5.times {current.add_monster(:slime, "A green slime blob emitting noxious fumes", 25, 1, 10)}
 
 current.disperse_monsters
 
@@ -203,26 +209,30 @@ user_choice = nil
 current.start(:entrance)
 current.show_current_description
 
+catch(:finish) do
+    until user_choice =~ /[qQ]/
+        monsters = current.detect_monsters
+        unless monsters.empty?
+            current.list_monsters(monsters)
+            current.battle
+        end
+        puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
+        user_choice = gets.chomp
 
-until user_choice =~ /[qQ]/
-    monsters = current.detect_monsters
-    unless monsters.empty?
-        current.list_monsters(monsters)
-        current.battle
-    end
-    puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
-    user_choice = gets.chomp
-
-    if user_choice =~ /(^S$|^s$)/
-        current.search
-    elsif user_choice =~ /(north|south|east|west)/
-        puts "\nYou go " + user_choice
-        new_location = current.go(user_choice)
-        if new_location
-            current.update_location(new_location)
-            current.show_current_description
-        else
-            puts "Dead End"
+        if user_choice =~ /(^S$|^s$)/
+            current.search
+        elsif user_choice =~ /(north|south|east|west)/
+            puts "\nYou go " + user_choice
+            new_location = current.go(user_choice)
+            if new_location == :exit
+                puts "You have escaped the dungeon!"
+                throw :finish
+            elsif new_location
+                current.update_location(new_location)
+                current.show_current_description
+            else
+                puts "Dead End"
+            end
         end
     end
 end
