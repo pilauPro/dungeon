@@ -49,8 +49,6 @@ class Dungeon
     # This method starts the player in a specified room of the dungeon
     def start(location)
         @player.location = location
-        show_current_description
-        detect_monsters
     end
     
     # This method prints the description of the room the player is currently in
@@ -76,12 +74,10 @@ class Dungeon
         
         if new_location
             @player.location = new_location
-            puts @player.location
             show_current_description
         else
             puts "Dead End"
         end
-        detect_monsters
     end
     
     # This method finds items in the current room and adds them to the player's inventory and removes them from the room 
@@ -99,14 +95,14 @@ class Dungeon
     # This method looks for monsters in the current room
     def detect_monsters
         current_room = find_room_in_dungeon(@player.location)
-        monsters = current_room.monsters
+        current_room.monsters
+    end
 
-        if monsters.size > 0
-            print "\nYou've come upon "
-            print "a host of monsters:\n" if monsters.size > 1
-            monsters.each{|monster| puts "a #{monster.name}"}
-        end
-        
+    # List names of monsters
+    def list_monsters(monsters)
+        print "\nYou've come upon "
+        print "a host of monsters:\n" if monsters.size > 1
+        monsters.each{|monster| puts "a #{monster.name}"}
     end
     
     # This class stores information about dungeon players
@@ -168,6 +164,13 @@ class Dungeon
         end
     end
     
+    class Combat
+        def initialize
+        end
+
+
+    end
+
     # This struct stores item information
     Item = Struct.new(:name, :description)
     
@@ -203,11 +206,16 @@ current.disperse_monsters
 
 puts "\n#{current.player.name} enters the dungeon"
 
-current.start(:entrance)
-
 user_choice = nil
+current.start(:entrance)
+current.show_current_description
+
 
 until user_choice =~ /[qQ]/
+    monsters = current.detect_monsters
+    unless monsters.empty?
+        current.list_monsters(monsters)
+    end
     puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
     user_choice = gets.chomp
 
