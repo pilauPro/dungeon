@@ -68,16 +68,12 @@ class Dungeon
 
     # This method moves the player to a new room based on the passed in direction
     def go(direction)
-        puts "\nYou go " + direction
-        
         new_location = find_room_in_direction(direction.to_sym)
-        
-        if new_location
-            @player.location = new_location
-            show_current_description
-        else
-            puts "Dead End"
-        end
+    end
+
+    # This method updates the players location
+    def update_location(new_location)
+        @player.location = new_location
     end
     
     # This method finds items in the current room and adds them to the player's inventory and removes them from the room 
@@ -104,10 +100,14 @@ class Dungeon
         print "a host of monsters:\n" if monsters.size > 1
         monsters.each{|monster| puts "a #{monster.name}"}
     end
+
+    def battle
+        puts @player.hit_points
+    end
     
     # This class stores information about dungeon players
     class Player
-        attr_accessor :name, :location
+        attr_accessor :name, :location, :hit_points
 
         # Create a player object, store the player's name, and set beginning hit points
         def initialize(name)
@@ -160,15 +160,8 @@ class Dungeon
             @monsters = []
         end
         def full_description
-            "\n" + @name + "\n\nYou are in " + @description
+            "\n" + "********** " + @name + " **********" + "\n\nYou are in " + @description
         end
-    end
-    
-    class Combat
-        def initialize
-        end
-
-
     end
 
     # This struct stores item information
@@ -215,6 +208,7 @@ until user_choice =~ /[qQ]/
     monsters = current.detect_monsters
     unless monsters.empty?
         current.list_monsters(monsters)
+        current.battle
     end
     puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
     user_choice = gets.chomp
@@ -222,6 +216,13 @@ until user_choice =~ /[qQ]/
     if user_choice =~ /(^S$|^s$)/
         current.search
     elsif user_choice =~ /(north|south|east|west)/
-        current.go(user_choice)
+        puts "\nYou go " + user_choice
+        new_location = current.go(user_choice)
+        if new_location
+            current.update_location(new_location)
+            current.show_current_description
+        else
+            puts "Dead End"
+        end
     end
 end
