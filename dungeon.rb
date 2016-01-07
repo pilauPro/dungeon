@@ -102,18 +102,28 @@ class Dungeon
         monsters.each{|monster| puts "a #{monster.name}"}
     end
 
+
     def battle
         monsters = find_room_in_dungeon(@player.location).monsters
-        until @player.hit_points <= 0
+        until player_dead or monsters_dead
             monsters.each {|monster| 
                 puts "#{monster.name} inflicts #{rand(monster.attack_min..monster.attack_max)} damage"
                 @player.hit_points -= rand(monster.attack_min..monster.attack_max)
+                puts @player.hit_points > 0 ? "player remaining hit points: #{@player.hit_points}" : "you have fallen in the dungeon!"
                 break if @player.hit_points <= 0
-                puts "player remaining hit points: #{@player.hit_points}"
             }
         end
     end
     
+    def player_dead
+        true if @player.hit_points <= 0
+    end
+
+    def monsters_dead
+        monsters = find_room_in_dungeon(@player.location).monsters
+        true if monsters.all? {|monster| monster.hit_points <= 0 }
+    end
+
     # This class stores information about dungeon players
     class Player
         attr_accessor :name, :location, :hit_points
