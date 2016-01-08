@@ -105,19 +105,19 @@ class Dungeon
 
     def battle
         until player_dead or monsters_dead
-            
+
             player_attack = player_attack_generate
             
             if player_strike_first then
                 player_inflict_damage
                 remove_dead_monsters
                 monsters_inflict_damage
-                break if player_dead
+                throw :finish if player_dead
             else
                 monsters_inflict_damage
+                throw :finish if player_dead
                 player_inflict_damage
                 remove_dead_monsters
-                break if player_dead
             end
             
         end
@@ -274,39 +274,6 @@ current.disperse_items
 
 current.disperse_monsters
 
-
-puts "\n#{current.player.name} enters the dungeon"
-
-user_choice = nil
-current.start(:entrance)
-current.show_current_description
-
-catch(:finish) do
-    until user_choice =~ /[qQ]/
-        unless current.detect_monsters.empty?
-            current.list_monsters
-            current.battle
-        end
-        puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
-        user_choice = gets.chomp
-
-        if user_choice =~ /(^S$|^s$)/
-            current.search
-        elsif user_choice =~ /(north|south|east|west)/
-            puts "\nYou go " + user_choice
-            new_location = current.go(user_choice)
-            if new_location == :exit
-                puts "You have escaped the dungeon!"
-                throw :finish
-            elsif new_location
-                current.update_location(new_location)
-                current.show_current_description
-            else
-                puts "Dead End"
-            end
-        end
-    end
-end
 
 puts "\n#{current.player.name} enters the dungeon"
 
