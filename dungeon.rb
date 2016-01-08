@@ -104,15 +104,67 @@ class Dungeon
 
 
     def battle
-        monsters = find_room_in_dungeon(@player.location).monsters
         until player_dead or monsters_dead
-            monsters.each {|monster| 
-                puts "#{monster.name} inflicts #{rand(monster.attack_min..monster.attack_max)} damage"
-                @player.hit_points -= rand(monster.attack_min..monster.attack_max)
-                puts @player.hit_points > 0 ? "player remaining hit points: #{@player.hit_points}" : "you have fallen in the dungeon!"
-                break if @player.hit_points <= 0
-            }
+            
+            player_attack = player_attack_generate
+            
+            if player_strike_first then
+                player_inflict_damage
+                remove_dead_monsters
+                monsters_inflict_damage
+                break if player_dead
+            else
+                monsters_inflict_damage
+                player_inflict_damage
+                remove_dead_monsters
+                break if player_dead
+            end
+            
         end
+        
+    end
+    
+    def report_slain_monster(monster)
+        puts "You have slain a #{monster.name}!"
+    end
+    
+    def remove_dead_monsters
+        dead = find_room_in_dungeon(@player.location).monsters.find {|monster| monster.hit_points < 1}
+        report_slain_monster(dead) if dead
+        
+        find_room_in_dungeon(@player.location).monsters.delete_if {|monster| 
+            monster.hit_points < 1
+        }
+    end
+    
+    def player_inflict_damage
+        monsters = find_room_in_dungeon(@player.location).monsters
+        player_attack = player_attack_generate
+        monsters.first.hit_points -= player_attack
+        puts "player inflicted #{player_attack} damage on #{monsters.first.name}"
+        puts "#{monsters.first.name} hit points remaining: #{monsters.first.hit_points}"
+    end
+    
+    def monsters_inflict_damage
+        find_room_in_dungeon(@player.location).monsters.each {|monster|
+            monster_attack = monster_attack_generate(monster)
+            puts "#{monster.name} inflicts #{monster_attack} damage"
+            @player.hit_points -= monster_attack
+            puts @player.hit_points > 0 ? "player remaining hit points: #{@player.hit_points}" : "you have fallen in the dungeon!"
+            return if player_dead
+        }
+    end
+    
+    def player_attack_generate
+        rand(@player.attack_min..@player.attack_max)
+    end
+    
+    def monster_attack_generate(monster)
+        rand(monster.attack_min..monster.attack_max)
+    end
+    
+    def player_strike_first
+        true if rand(1..2) == 1
     end
     
     def player_dead
@@ -126,13 +178,15 @@ class Dungeon
 
     # This class stores information about dungeon players
     class Player
-        attr_accessor :name, :location, :hit_points
+        attr_accessor :name, :location, :hit_points, :attack_min, :attack_max
 
         # Create a player object, store the player's name, and set beginning hit points
         def initialize(name)
             @name = name
             @inventory = []
             @hit_points = 1000
+            @attack_min = 20
+            @attack_max = 500
         end
         
         # This method puts items in the player's inventory
@@ -215,11 +269,44 @@ current.add_item(:shield, "An oval shield of mirrored steel")
 current.disperse_items
 
 3.times {current.add_monster(:orc, "A savage orc, dripping with black slime", 100, 5, 50)}
-2.times {current.add_monster(:serpent, "A venimous snake of enormous proportions", 50, 0, 1000)}
+10.times {current.add_monster(:serpent, "A venimous snake of enormous proportions", 50, 0, 1000)}
 5.times {current.add_monster(:slime, "A green slime blob emitting noxious fumes", 25, 1, 10)}
 
 current.disperse_monsters
 
+
+puts "\n#{current.player.name} enters the dungeon"
+
+user_choice = nil
+current.start(:entrance)
+current.show_current_description
+
+catch(:finish) do
+    until user_choice =~ /[qQ]/
+        unless current.detect_monsters.empty?
+            current.list_monsters
+            current.battle
+        end
+        puts "\n#{current.player.name}, search room (s) or move (north, south, east, west)?\n"
+        user_choice = gets.chomp
+
+        if user_choice =~ /(^S$|^s$)/
+            current.search
+        elsif user_choice =~ /(north|south|east|west)/
+            puts "\nYou go " + user_choice
+            new_location = current.go(user_choice)
+            if new_location == :exit
+                puts "You have escaped the dungeon!"
+                throw :finish
+            elsif new_location
+                current.update_location(new_location)
+                current.show_current_description
+            else
+                puts "Dead End"
+            end
+        end
+    end
+end
 
 puts "\n#{current.player.name} enters the dungeon"
 
