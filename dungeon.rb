@@ -104,18 +104,18 @@ class Dungeon
 
 
     def battle
-        until player_dead or monsters_dead
+        until @player.player_dead or monsters_dead
 
-            player_attack = player_attack_generate
+            player_attack = @player.player_attack_generate
             
-            if player_strike_first then
+            if @player.player_strike_first then
                 player_inflict_damage
                 remove_dead_monsters
                 monsters_inflict_damage
-                throw :finish if player_dead
+                throw :finish if @player.player_dead
             else
                 monsters_inflict_damage
-                throw :finish if player_dead
+                throw :finish if @player.player_dead
                 player_inflict_damage
                 remove_dead_monsters
             end
@@ -139,7 +139,7 @@ class Dungeon
     
     def player_inflict_damage
         monsters = find_room_in_dungeon(@player.location).monsters
-        player_attack = player_attack_generate
+        player_attack = @player.player_attack_generate
         monsters.first.hit_points -= player_attack
         puts "player inflicted #{player_attack} damage on #{monsters.first.name}"
         puts "#{monsters.first.name} hit points remaining: #{monsters.first.hit_points}"
@@ -151,24 +151,13 @@ class Dungeon
             puts "#{monster.name} inflicts #{monster_attack} damage"
             @player.hit_points -= monster_attack
             puts @player.hit_points > 0 ? "player remaining hit points: #{@player.hit_points}" : "you have fallen in the dungeon!"
-            return if player_dead
+            return if @player.player_dead
         }
     end
     
-    def player_attack_generate
-        rand(@player.attack_min..@player.attack_max)
-    end
     
     def monster_attack_generate(monster)
         rand(monster.attack_min..monster.attack_max)
-    end
-    
-    def player_strike_first
-        true if rand(1..2) == 1
-    end
-    
-    def player_dead
-        true if @player.hit_points <= 0
     end
 
     def monsters_dead
@@ -202,7 +191,23 @@ class Dungeon
             puts "\nInventory List\n"
             @inventory.each {|item| puts item.description}
         end
+
+        # This method returns true if the player is dead
+        def player_dead
+            true if self.hit_points <= 0
+        end
+
+        # This method generates a random attack number for the player
+        def player_attack_generate
+            rand(self.attack_min..self.attack_max)
+        end
         
+
+        def player_strike_first
+            true if rand(1..2) == 1
+        end
+
+
     end
 
     # This class stores information about dungeon monsters
