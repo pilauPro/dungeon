@@ -124,13 +124,9 @@ class Dungeon
         
     end
     
-    def report_slain_monster(monster)
-        puts "You have slain a #{monster.name}!"
-    end
-    
     def remove_dead_monsters
         dead = find_room_in_dungeon(@player.location).monsters.find {|monster| monster.hit_points < 1}
-        report_slain_monster(dead) if dead
+        Monster.report_slain_monster(dead) if dead
         
         find_room_in_dungeon(@player.location).monsters.delete_if {|monster| 
             monster.hit_points < 1
@@ -147,19 +143,15 @@ class Dungeon
     
     def monsters_inflict_damage
         find_room_in_dungeon(@player.location).monsters.each {|monster|
-            monster_attack = monster_attack_generate(monster)
+            monster_attack = Monster.monster_attack_generate(monster)
             puts "#{monster.name} inflicts #{monster_attack} damage"
             @player.hit_points -= monster_attack
             puts @player.hit_points > 0 ? "player remaining hit points: #{@player.hit_points}" : "you have fallen in the dungeon!"
             return if @player.player_dead
         }
     end
-    
-    
-    def monster_attack_generate(monster)
-        rand(monster.attack_min..monster.attack_max)
-    end
 
+    # Returns true if all monsters in current room are dead
     def monsters_dead
         monsters = find_room_in_dungeon(@player.location).monsters
         true if monsters.all? {|monster| monster.hit_points <= 0 }
@@ -222,6 +214,17 @@ class Dungeon
             @attack_min = attack_min
             @attack_max = attack_max
         end
+
+        # This method reports a slain monster
+        def self.report_slain_monster(monster)
+            puts "You have slain a #{monster.name}!"
+        end
+
+        # This method generates a random attack number for a monster
+        def self.monster_attack_generate(monster)
+            rand(monster.attack_min..monster.attack_max)
+        end
+
     end
     
     # This class stores information about dungeon rooms
