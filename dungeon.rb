@@ -70,11 +70,6 @@ class Dungeon
     def go(direction)
         new_location = find_room_in_direction(direction.to_sym)
     end
-
-    # This method updates the players location
-    def update_location(new_location)
-        @player.location = new_location
-    end
     
     # This method finds items in the current room and adds them to the player's inventory and removes them from the room 
     def search
@@ -194,6 +189,10 @@ class Dungeon
             rand(self.attack_min..self.attack_max)
         end
         
+        # This method updates the players location
+        def update_location(new_location)
+            self.location = new_location
+        end
 
         def player_strike_first
             true if rand(1..2) == 1
@@ -307,7 +306,7 @@ catch(:finish) do
                 puts "You have escaped the dungeon!"
                 throw :finish
             elsif new_location
-                current.update_location(new_location)
+                current.player.update_location(new_location)
                 current.show_current_description
             else
                 puts "Dead End"
